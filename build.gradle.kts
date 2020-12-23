@@ -37,7 +37,8 @@ dependencies {
 
     //Share Buttons (chapter 7)
     implementation(npm("react-share", "~4.2.1"))
-    implementation(npm(File("/Users/sitalov/Dropbox/SoftwareEngineering/Projects/Roam/goodreads2roam")))
+    // implementation(npm(File("/Users/sitalov/Dropbox/SoftwareEngineering/Projects/Roam/goodreads2roam")))
+    implementation(npm("goodreads2roam", "~0.1.0"))
 
     //Coroutines (chapter 8)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
