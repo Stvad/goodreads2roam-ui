@@ -7,19 +7,17 @@ import kotlinx.coroutines.await
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.css.Display
-import kotlinx.css.Position
+import kotlinx.css.Overflow
 import kotlinx.css.TextAlign
+import kotlinx.css.WhiteSpace
 import kotlinx.css.display
+import kotlinx.css.flexGrow
 import kotlinx.css.height
-import kotlinx.css.left
-import kotlinx.css.pct
-import kotlinx.css.position
-import kotlinx.css.properties.Transforms
-import kotlinx.css.properties.translate
+import kotlinx.css.maxHeight
+import kotlinx.css.overflowX
 import kotlinx.css.textAlign
-import kotlinx.css.top
-import kotlinx.css.transform
 import kotlinx.css.vh
+import kotlinx.css.whiteSpace
 import kotlinx.html.InputType
 import kotlinx.html.id
 import kotlinx.html.js.onChangeFunction
@@ -27,6 +25,7 @@ import kotlinx.html.js.onDragEnterFunction
 import kotlinx.html.js.onDragLeaveFunction
 import kotlinx.html.js.onDragOverFunction
 import kotlinx.html.js.onDropFunction
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromDynamic
 import org.w3c.dom.DragEvent
@@ -34,39 +33,75 @@ import org.w3c.dom.HTMLInputElement
 import org.w3c.files.FileList
 import org.w3c.files.FileReader
 import org.w3c.files.get
+import react.RBuilder
 import react.RProps
-import react.dom.pre
 import react.functionalComponent
+import react.useMemo
 import react.useState
 import styled.css
 import styled.styledDiv
 import styled.styledInput
 import styled.styledLabel
+import styled.styledPre
 
-val App = functionalComponent<RProps> {
+val RBuilder.uploadPanel
+    get() = extension(UploadPanel)
+
+external interface UploadPanelProps : RProps {
+    var shelvesToShow: List<String>?
+    var setAllShelves: (List<String>) -> Unit
+}
+
+val UploadPanel = functionalComponent<UploadPanelProps> { props ->
     val (text, setText) = useState("")
+    val (books, setBooks) = useState<dynamic>(null)
+    val (booksToShow, setBooksToShow) = useState<dynamic>(null)
 
+    // val (shelvesToShow, setShelves) = useState(listOf("read", "to-read", "non-fiction"))
 
     fun onFilesSelected(files: FileList?) {
         console.log("files", files)
         files?.get(0)?.let {
             FileReader().apply {
-                onloadend = {
-                    setText(toJs(booksToRoam(parseBooks(result.unsafeCast<String>()))))
-                }
                 readAsText(it)
+                onloadend = {
+                    val parsedBooks = parseBooks(result.unsafeCast<String>())
+                    println(parsedBooks)
+                    println(cljMap(::shelves, parsedBooks))
+                    val allShelves =
+                        toJs(cljMap(::shelves, parsedBooks)).unsafeCast<Array<Array<String>>>().flatten().toHashSet()
+                    println(allShelves)
+                    props.setAllShelves(allShelves.toList().sorted())
+
+                    setBooks(parsedBooks)
+
+                    // println(books[0])
+                    // println(toJs(books))
+                    // println(shelves(toJs(books)[0]))
+                }
             }
         }
     }
+    //
+    useMemo({
+        if (books != null) {
+            setBooksToShow(
+                if (props.shelvesToShow?.isEmpty() == false) {
+                    filterByShelves(books, props.shelvesToShow!!.toTypedArray())
+                } else books
+            )
+        }
+        console.log("memo?")
+    }, arrayOf(books, props.shelvesToShow))
+    //
+    if (booksToShow != null) {
+        setText(toJs(booksToRoam(booksToShow)))
+    }
 
-    // mGridContainer {
-    //    mGridItem {
     styledDiv {
         css {
             height = 100.vh
-            // display = Display.flex
-            // flexDirection = FlexDirection.column
-            // width
+            flexGrow = 3.0
         }
 
         //todo on enter indicator
@@ -76,7 +111,6 @@ val App = functionalComponent<RProps> {
             it.preventDefault()
         }
 
-
         attrs.onDragEnterFunction = {
             console.log("enter", it)
         }
@@ -84,7 +118,6 @@ val App = functionalComponent<RProps> {
         attrs.onDragLeaveFunction = {
             console.log("leave", it)
         }
-
 
         attrs.onDropFunction = {
             val e = it.unsafeCast<DragEvent>()
@@ -94,7 +127,6 @@ val App = functionalComponent<RProps> {
             onFilesSelected(e.dataTransfer?.files)
         }
 
-        val hiddenInput = "hiddenInput"
         // inp.props?.
 
         mPaper {
@@ -106,13 +138,14 @@ val App = functionalComponent<RProps> {
             if (text.isBlank()) {
                 styledLabel {
                     css {
-                        position = Position.fixed;
-                        top = 50.pct;
-                        left = 50.pct;
+                        // position = Position.fixed;
+                        // top = 50.pct;
+                        // left = 50.pct;
                         /* bring your own prefixes */
-                        transform = Transforms().apply { translate((-50).pct, (-50).pct) }
+                        // transform = Transforms().apply { translate((-50).pct, (-50).pct) }
                     }
 
+                    val hiddenInput = "hiddenInput"
                     attrs.htmlFor = hiddenInput
 
                     mTypography(variant = MTypographyVariant.h1) {
@@ -137,15 +170,38 @@ val App = functionalComponent<RProps> {
                 }
             }
 
-            pre {
+            styledPre {
+                css {
+                    whiteSpace = WhiteSpace.preWrap
+                    overflowX = Overflow.scroll
+                }
                 +text
             }
         }
     }
 
-    // }
-    // }
+}
 
+val App = functionalComponent<RProps> {
+    val (shelves, setShelves) = useState(listOf("read", "to-read", "non-fiction"))
+    val (shelvesToShow, setShelvesToShow) = useState(listOf<String>())
+
+    styledDiv {
+        css {
+            display = Display.flex
+            maxHeight = 98.vh
+        }
+
+        uploadPanel {
+            this.shelvesToShow = shelvesToShow
+            setAllShelves = setShelves
+        }
+
+        filteringSidebar {
+            this.shelves = shelves
+            this.setShelvesToShow = setShelvesToShow
+        }
+    }
 }
 
 /**
@@ -160,9 +216,14 @@ val App = functionalComponent<RProps> {
  *
  * support buttons
  * this is also available as CLI at ...
+ *
+ * export:
+ * copy to clipboard button (doing that automagically can also be an option, but I lean against it)
+ * download button
 
  */
 
+@ExperimentalSerializationApi
 suspend fun fetchVideo(id: Int): Video =
     window.fetch("https://my-json-server.typicode.com/kotlin-hands-on/kotlinconf-json/videos/$id")
         .await()
