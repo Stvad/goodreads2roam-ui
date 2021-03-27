@@ -1,62 +1,51 @@
 import com.ccfraser.muirwik.components.MOptionColor
+import com.ccfraser.muirwik.components.form.MFormControlComponent
 import com.ccfraser.muirwik.components.form.mFormControl
 import com.ccfraser.muirwik.components.form.mFormGroup
 import com.ccfraser.muirwik.components.form.mFormLabel
+import com.ccfraser.muirwik.components.input.mInput
 import com.ccfraser.muirwik.components.mCheckboxWithLabel
-import kotlinx.css.Align
-import kotlinx.css.Color
-import kotlinx.css.Display
-import kotlinx.css.FlexDirection
-import kotlinx.css.Overflow
-import kotlinx.css.alignItems
-import kotlinx.css.color
-import kotlinx.css.display
-import kotlinx.css.em
-import kotlinx.css.flexDirection
-import kotlinx.css.flexGrow
-import kotlinx.css.overflowX
-import kotlinx.css.padding
-import kotlinx.css.pct
-import kotlinx.css.properties.TextDecoration
-import kotlinx.css.textDecoration
-import kotlinx.css.width
-import react.RBuilder
-import react.RProps
-import react.functionalComponent
-import react.useState
-import styled.css
-import styled.styledA
-import styled.styledDiv
-import styled.styledH2
-import styled.styledH3
-import styled.styledHr
+import kotlinx.css.*
+import kotlinx.css.properties.*
+import org.w3c.dom.HTMLInputElement
+import react.*
+import styled.*
 
 val RBuilder.filteringSidebar
     get() = extension(FilteringSidebar)
 
 external interface FilteringSidebarProps : RProps {
-    var shelves: List<String>?
+    var shelves: List<String>
     var setShelvesToShow: (List<String>) -> Unit
 }
 
 val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
-    val (activeShelves, setActiveShelves) = useState(emptySet<String>())
-    fun handleChecked(name: String, checked: Boolean) {
-        val newShelves = if (checked) activeShelves + name else activeShelves - name
-        setActiveShelves(newShelves)
-        props.setShelvesToShow(newShelves.toList())
+    val (checkedState, setCheckedState) = useState(emptyMap<String, Boolean>())
+    val (filter, setFilter) = useState("")
+
+    useEffect(listOf(props.shelves)) {
+        setCheckedState(props.shelves.associateWith { false })
+    }
+
+    fun handleChecked(name: String) {
+        val newState = checkedState + (name to !checkedState.getOrElse(name) { false })
+        setCheckedState(newState)
+        props.setShelvesToShow(newState.filter { it.value }.keys.toList())
     }
 
     styledDiv {
         css {
             display = Display.flex
             flexDirection = FlexDirection.column
-            flexGrow = 1.0
-            alignItems = Align.center
+            // flexGrow = 1.0
+            width = 20.pct
+            alignItems = Align.stretch
+            padding(left = 1.em, right = 1.em)
+            height = 100.vh
         }
         styledDiv {
             css {
-                padding(left = 2.em, right = 2.em)
+                alignSelf = Align.center
             }
 
             styledH2 {
@@ -80,18 +69,37 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
             }
         }
 
-        mFormControl {
+        mFormControl(component = MFormControlComponent.fieldSet) {
             css {
-                overflowX = Overflow.scroll
+                // overflowY = Overflow.scroll
+                height = 100.pct
             }
 
-            mFormLabel("Shelves (combined through AND)", component = "legend", className = "shelves-title")
+            mFormLabel("Shelves (combined through AND)", component = "legend", className = "shelves-title") {
+                css {
+                    marginTop = 0.5.em
+                }
+            }
 
-            mFormGroup {
-                props.shelves?.forEach {
-                    shelfCheckbox {
-                        name = it
-                        handleChecked = ::handleChecked
+            mInput(placeholder = "Filter", value = filter) {
+                css {
+                    marginTop = 0.7.em
+                }
+
+                attrs.onChange = { e -> setFilter(e.target.unsafeCast<HTMLInputElement>().value) }
+            }
+
+            styledDiv {
+                css {
+                    overflowY = Overflow.auto
+                }
+
+                mFormGroup {
+                    checkedState.toList().filter { it.first.contains(filter) }.sortedBy { it.first }.forEach { shelf ->
+
+                        mCheckboxWithLabel(shelf.first, shelf.second, color = MOptionColor.primary) {
+                            attrs.onClick = { handleChecked(shelf.first) }
+                        }
                     }
                 }
             }
@@ -99,23 +107,3 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
 
     }
 }
-
-external interface ShelfCheckboxProps : RProps {
-    var name: String
-    var handleChecked: (String, Boolean) -> Unit
-}
-
-val ShelfCheckbox = functionalComponent<ShelfCheckboxProps> { props ->
-    val (checked, setChecked) = useState(false)
-
-    mCheckboxWithLabel(props.name, checked, color = MOptionColor.primary) {
-        attrs.onClick = {
-            val newState = !checked
-            setChecked(newState)
-            props.handleChecked(props.name, newState)
-        }
-    }
-}
-
-val RBuilder.shelfCheckbox
-    get() = extension(ShelfCheckbox)
