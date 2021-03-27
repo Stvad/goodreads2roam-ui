@@ -30,6 +30,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromDynamic
 import org.w3c.dom.DragEvent
 import org.w3c.dom.HTMLInputElement
+import org.w3c.dom.events.Event
 import org.w3c.files.FileList
 import org.w3c.files.FileReader
 import org.w3c.files.get
@@ -57,28 +58,20 @@ val UploadPanel = functionalComponent<UploadPanelProps> { props ->
     val (books, setBooks) = useState<dynamic>(null)
     val (booksToShow, setBooksToShow) = useState<dynamic>(null)
 
-    // val (shelvesToShow, setShelves) = useState(listOf("read", "to-read", "non-fiction"))
-
     fun onFilesSelected(files: FileList?) {
         console.log("files", files)
         files?.get(0)?.let {
             FileReader().apply {
-                readAsText(it)
-                onloadend = {
+                val onLoadEnd: (Event) -> Unit = {
                     val parsedBooks = parseBooks(result.unsafeCast<String>())
-                    println(parsedBooks)
-                    println(cljMap(::shelves, parsedBooks))
                     val allShelves =
                         toJs(cljMap(::shelves, parsedBooks)).unsafeCast<Array<Array<String>>>().flatten().toHashSet()
-                    println(allShelves)
-                    props.setAllShelves(allShelves.toList().sorted())
+                    props.setAllShelves(allShelves.toList().filter { it.isNotBlank() }.sorted())
 
                     setBooks(parsedBooks)
-
-                    // println(books[0])
-                    // println(toJs(books))
-                    // println(shelves(toJs(books)[0]))
                 }
+                readAsText(it)
+                onloadend = onLoadEnd
             }
         }
     }
@@ -87,16 +80,18 @@ val UploadPanel = functionalComponent<UploadPanelProps> { props ->
         if (books != null) {
             setBooksToShow(
                 if (props.shelvesToShow?.isEmpty() == false) {
-                    filterByShelves(books, props.shelvesToShow!!.toTypedArray())
+                    filterByShelves(toClj(props.shelvesToShow!!.toTypedArray()), books)
                 } else books
             )
         }
-        console.log("memo?")
     }, arrayOf(books, props.shelvesToShow))
     //
-    if (booksToShow != null) {
-        setText(toJs(booksToRoam(booksToShow)))
-    }
+    useMemo({
+        if (booksToShow != null) {
+            val newText: String = toJs(booksToRoam(booksToShow))
+            setText(if (newText.isNotBlank()) newText else "No books found that are on all the selected shelves")
+        }
+    }, arrayOf(booksToShow))
 
     styledDiv {
         css {

@@ -11,7 +11,7 @@ external fun bookToRoam(book: dynamic): String
 external fun shelves(book: dynamic): List<String>
 
 @JsName("filterByShelves")
-external fun filterByShelves(books: dynamic, shelves: Array<String>): dynamic
+external fun filterByShelves(shelves: Array<String>, books: dynamic): dynamic
 
 @JsName("cljMap")
 external fun cljMap(cljFun: dynamic, cljCollection: dynamic): dynamic
@@ -22,3 +22,5 @@ external fun booksToRoam(books: dynamic): dynamic
 @JsName("toJs")
 external fun toJs(cljs: dynamic): dynamic
 
+@JsName("toClj")
+external fun toClj(js: dynamic): dynamic

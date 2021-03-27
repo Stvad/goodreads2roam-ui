@@ -44,8 +44,7 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
     fun handleChecked(name: String, checked: Boolean) {
         val newShelves = if (checked) activeShelves + name else activeShelves - name
         setActiveShelves(newShelves)
-        println(newShelves)
-        props.setShelvesToShow(activeShelves.toList())
+        props.setShelvesToShow(newShelves.toList())
     }
 
     styledDiv {
@@ -86,7 +85,7 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
                 overflowX = Overflow.scroll
             }
 
-            mFormLabel("Shelves", component = "legend", className = "shelves-title")
+            mFormLabel("Shelves (combined through AND)", component = "legend", className = "shelves-title")
 
             mFormGroup {
                 props.shelves?.forEach {
@@ -118,6 +117,5 @@ val ShelfCheckbox = functionalComponent<ShelfCheckboxProps> { props ->
     }
 }
 
-// var onSelectVideo: (Video) -> Unit
 val RBuilder.shelfCheckbox
     get() = extension(ShelfCheckbox)
