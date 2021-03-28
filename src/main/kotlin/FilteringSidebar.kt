@@ -1,12 +1,11 @@
-import com.ccfraser.muirwik.components.MOptionColor
-import com.ccfraser.muirwik.components.form.MFormControlComponent
+import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.form.mFormControl
 import com.ccfraser.muirwik.components.form.mFormGroup
 import com.ccfraser.muirwik.components.form.mFormLabel
 import com.ccfraser.muirwik.components.input.mInput
-import com.ccfraser.muirwik.components.mCheckboxWithLabel
 import kotlinx.css.*
 import kotlinx.css.properties.*
+import kotlinx.html.title
 import org.w3c.dom.HTMLInputElement
 import react.*
 import styled.*
@@ -24,7 +23,7 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
     val (filter, setFilter) = useState("")
 
     useEffect(listOf(props.shelves)) {
-        setCheckedState(props.shelves.associateWith { false })
+        setCheckedState(props.shelves.associateWith { false } + checkedState)
     }
 
     fun handleChecked(name: String) {
@@ -40,19 +39,33 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
             // flexGrow = 1.0
             width = 20.pct
             alignItems = Align.stretch
-            padding(left = 1.em, right = 1.em)
+            padding(left = 0.5.em, right = 0.5.em)
             height = 100.vh
         }
         styledDiv {
             css {
                 alignSelf = Align.center
+                marginTop = 1.em
+                textAlign = TextAlign.center
             }
 
-            styledH2 {
+            mTypography(
+                variant = MTypographyVariant.h4,
+                align = MTypographyAlign.center,
+            ) {
                 +"Goodreads2Roam"
             }
-            styledH3 {
-                +"by "
+
+            mTypography(
+                variant = MTypographyVariant.body2,
+                color = MTypographyColor.textSecondary,
+                align = MTypographyAlign.center,
+            ) {
+                css {
+                    padding(vertical = 0.5.em)
+                }
+
+                +"Supported by "
                 styledA {
                     css {
                         textDecoration = TextDecoration.none
@@ -61,23 +74,39 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
                     attrs.href = "https://roam.garden"
                     +"\uD83C\uDF31 Roam Garden"
                 }
+                +" a service to generate beautiful static sites (digital gardens) from your RoamResearch Graph"
+            }
+
+            styledIframe {
+                css {
+                    borderWidth = 0.px
+                }
+
+                attrs.src = "https://github.com/sponsors/Stvad/button"
+                attrs.title = "Sponsor Stvad"
+                attrs.height = "35"
+                attrs.width = "116"
             }
         }
         styledHr {
             css {
                 width = 100.pct
+                borderWidth = 0.px
+                borderTopWidth = 1.px
             }
         }
 
-        mFormControl(component = MFormControlComponent.fieldSet) {
+        mFormControl {
             css {
-                // overflowY = Overflow.scroll
-                height = 100.pct
+                minHeight = 0.px
+                display = Display.flex
+                flexDirection = FlexDirection.column
             }
 
             mFormLabel("Shelves (combined through AND)", component = "legend", className = "shelves-title") {
                 css {
                     marginTop = 0.5.em
+                    textAlign = TextAlign.center
                 }
             }
 
@@ -104,6 +133,5 @@ val FilteringSidebar = functionalComponent<FilteringSidebarProps> { props ->
                 }
             }
         }
-
     }
 }

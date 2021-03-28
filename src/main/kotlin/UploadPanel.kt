@@ -1,11 +1,7 @@
-import com.ccfraser.muirwik.components.MTypographyVariant
+import com.ccfraser.muirwik.components.*
 import com.ccfraser.muirwik.components.button.mIconButton
-import com.ccfraser.muirwik.components.mPaper
-import com.ccfraser.muirwik.components.mSvgIcon
-import com.ccfraser.muirwik.components.mTypography
 import kotlinx.browser.window
 import kotlinx.css.*
-import kotlinx.css.properties.*
 import kotlinx.html.InputType
 import kotlinx.html.id
 import kotlinx.html.js.*
@@ -70,7 +66,7 @@ val UploadPanel = functionalComponent<UploadPanelProps> { props ->
             css {
                 // otherwise the it's somehow not applied with proper priority :(
                 // position = Position.absolute
-                put("position", "fixed !important")
+                put("position", "absolute !important")
 
                 top = 1.em
                 right = 1.em
@@ -88,16 +84,40 @@ val UploadPanel = functionalComponent<UploadPanelProps> { props ->
 
     fun RBuilder.filePrompt() {
         styledLabel {
+            css {
+                margin(all = LinearDimension.auto)
+                padding(all = 8.em)
+                cursor = Cursor.pointer
+                borderRadius = 4.px
+                backgroundColor = rgb(250, 250, 250)
+                // Stolen from paper thing
+                put(
+                    "box-shadow",
+                    "0px 3px 1px -2px rgba(0,0,0,0.2),0px 2px 2px 0px rgba(0,0,0,0.14),0px 1px 5px 0px rgba(0,0,0,0.12)"
+                )
+            }
 
             val hiddenInput = "hiddenInput"
             attrs.htmlFor = hiddenInput
 
-            mTypography(variant = MTypographyVariant.h1) {
-                css {
-                    textAlign = TextAlign.center
-                }
-                +"Gimme your files"
+            mTypography(
+                variant = MTypographyVariant.h1,
+                align = MTypographyAlign.center,
+            ) {
+                +"Goodreads export"
             }
+
+            mTypography(
+                variant = MTypographyVariant.h3,
+                align = MTypographyAlign.center,
+                color = MTypographyColor.textSecondary,
+            ) {
+                css {
+                    paddingTop = 0.5.em
+                }
+                +"Drag & drop exported csv here or click to select it from the disk"
+            }
+
 
             styledInput(type = InputType.file) {
                 css {
@@ -121,13 +141,8 @@ val UploadPanel = functionalComponent<UploadPanelProps> { props ->
 
             padding(all = 0.5.em)
 
-            transform = Transforms().apply {
-                // The main point is to shift the parent of "fixed" positioning for the children elements
-                scaleX(1)
-            }
+            position = Position.relative
         }
-
-        //todo on enter indicator
 
         attrs.onDragOverFunction = {
             console.log("over", it)
@@ -153,13 +168,11 @@ val UploadPanel = functionalComponent<UploadPanelProps> { props ->
 
         mPaper {
             css {
-                // alignItems = Align.center
-
-                position = Position.relative
                 padding(all = 2.em)
                 height = 100.pct
 
                 overflowY = Overflow.auto
+                display = Display.flex
             }
 
             if (text.isBlank()) {

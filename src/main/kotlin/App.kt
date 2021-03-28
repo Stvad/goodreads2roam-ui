@@ -5,7 +5,7 @@ import react.useState
 import styled.*
 
 val App = functionalComponent<RProps> {
-    val (shelves, setShelves) = useState(listOf("read", "to-read", "non-fiction"))
+    val (shelves, setShelves) = useState(listOf("read", "to-read"))
     val (shelvesToShow, setShelvesToShow) = useState(listOf<String>())
 
     styledDiv {
